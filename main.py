@@ -1,5 +1,5 @@
 from typing import Union
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header
 from pydantic import BaseModel
 import openai
 import os
@@ -11,13 +11,43 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 class MCPRequest(BaseModel):
     jsonrpc: str
     method: str
-    params: dict
-    id: Union[str, int]  # ✅ Fix: Accept string or int for JSON-RPC id
+    params: dict | None = None
+    id: Union[str, int]
 
 @app.post("/")
-async def handle_mcp(request: Request):
+async def handle_mcp(request: Request, authorization: str = Header(default=None)):
+    # Log or safely ignore the Authorization header
     body = await request.json()
     mcp = MCPRequest(**body)
+
+    if mcp.method == "describe":
+        return {
+            "jsonrpc": "2.0",
+            "id": mcp.id,
+            "result": {
+                "name": "ChatGPT via MCP",
+                "description": "Connects to OpenAI's GPT model via custom MCP wrapper.",
+                "methods": ["complete"],
+            }
+        }
+
+    if mcp.method == "parameters":
+        return {
+            "jsonrpc": "2.0",
+            "id": mcp.id,
+            "result": {
+                "parameters": {
+                    "prompt": {
+                        "type": "string",
+                        "description": "User input prompt"
+                    },
+                    "system_prompt": {
+                        "type": "string",
+                        "description": "Optional system instruction for GPT"
+                    }
+                }
+            }
+        }
 
     if mcp.method == "complete":
         prompt = mcp.params.get("prompt", "")
@@ -58,6 +88,6 @@ async def handle_mcp(request: Request):
         "id": mcp.id,
         "error": {
             "code": -32601,
-            "message": "Method not found"
+            "message": f"Method '{mcp.method}' not found"
         }
     }
