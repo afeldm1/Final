@@ -12,7 +12,7 @@ class MCPRequest(BaseModel):
     jsonrpc: str
     method: str
     params: dict
-    id: Union[str, int]
+    id: Union[str, int]  # ✅ Fix: Accept string or int for JSON-RPC id
 
 @app.post("/")
 async def handle_mcp(request: Request):
