@@ -21,7 +21,7 @@ async def handle_mcp(request: Request, authorization: str = Header(default=None)
     mcp = MCPRequest(**body)
 
     if mcp.method == "describe":
-        return {
+        return JSONResponse(content={
             "jsonrpc": "2.0",
             "id": mcp.id,
             "result": {
@@ -29,10 +29,10 @@ async def handle_mcp(request: Request, authorization: str = Header(default=None)
                 "description": "Connects to OpenAI's GPT model via custom MCP wrapper.",
                 "methods": ["complete"],
             }
-        }
+        })
 
     if mcp.method == "parameters":
-        return {
+        return JSONResponse(content={
             "jsonrpc": "2.0",
             "id": mcp.id,
             "result": {
@@ -47,7 +47,7 @@ async def handle_mcp(request: Request, authorization: str = Header(default=None)
                     }
                 }
             }
-        }
+        })
 
     if mcp.method == "complete":
         prompt = mcp.params.get("prompt", "")
@@ -65,39 +65,37 @@ async def handle_mcp(request: Request, authorization: str = Header(default=None)
             )
 
             result = completion.choices[0].message["content"]
-            return {
+            return JSONResponse(content={
                 "jsonrpc": "2.0",
                 "id": mcp.id,
                 "result": {
                     "completion": result,
                 }
-            }
+            })
 
         except Exception as e:
-            return {
+            return JSONResponse(content={
                 "jsonrpc": "2.0",
                 "id": mcp.id,
                 "error": {
                     "code": -32000,
                     "message": str(e)
                 }
-            }
+            })
 
-    return {
+    return JSONResponse(content={
         "jsonrpc": "2.0",
         "id": mcp.id,
         "error": {
             "code": -32601,
             "message": f"Method '{mcp.method}' not found"
         }
-    }
+    })
 
 @app.get("/.well-known/oauth-authorization-server")
 async def oauth_metadata():
-    # Stub response to keep Claude happy
-    return JSONResponse(content={"issuer": "https://your-server-url"}, status_code=200)
+    return JSONResponse(content={"issuer": "https://your-server-url"})
 
 @app.post("/register")
 async def register_stub():
-    # Stub register endpoint just to return 200 OK
-    return JSONResponse(content={"status": "ok"}, status_code=200)
+    return JSONResponse(content={"status": "ok"})
