@@ -1,3 +1,4 @@
+from typing import Union
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import openai
@@ -11,7 +12,7 @@ class MCPRequest(BaseModel):
     jsonrpc: str
     method: str
     params: dict
-    id: str
+    id: Union[str, int]
 
 @app.post("/")
 async def handle_mcp(request: Request):
