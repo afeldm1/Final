@@ -1,5 +1,6 @@
 from typing import Union
 from fastapi import FastAPI, Request, Header
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import openai
 import os
@@ -16,7 +17,6 @@ class MCPRequest(BaseModel):
 
 @app.post("/")
 async def handle_mcp(request: Request, authorization: str = Header(default=None)):
-    # Log or safely ignore the Authorization header
     body = await request.json()
     mcp = MCPRequest(**body)
 
@@ -91,3 +91,13 @@ async def handle_mcp(request: Request, authorization: str = Header(default=None)
             "message": f"Method '{mcp.method}' not found"
         }
     }
+
+@app.get("/.well-known/oauth-authorization-server")
+async def oauth_metadata():
+    # Stub response to keep Claude happy
+    return JSONResponse(content={"issuer": "https://your-server-url"}, status_code=200)
+
+@app.post("/register")
+async def register_stub():
+    # Stub register endpoint just to return 200 OK
+    return JSONResponse(content={"status": "ok"}, status_code=200)
